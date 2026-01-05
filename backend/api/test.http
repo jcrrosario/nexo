@@ -1,0 +1,18 @@
+### Health
+GET http://localhost:3000/auth/health
+
+### Me
+GET http://localhost:3000/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnQiOiIxMjMiLCJlbWFpbCI6InRlc3RlQG5leG8uY29tIiwiaWF0IjoxNzY3MzgzODcyLCJleHAiOjE3NjczODQ3NzJ9.GjG15v95DzdEjVddeDS__vivP_P9ocTC4y_3C02XAwg
+
+###
+
+### Login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "tenant": "123",
+  "email": "teste@nexo.com",
+  "password": "123456"
+}
