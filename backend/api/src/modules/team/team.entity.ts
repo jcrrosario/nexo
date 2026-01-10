@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../../shared/entities/base.entity';
 
 @Entity('teams')

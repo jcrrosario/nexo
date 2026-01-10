@@ -51,9 +51,16 @@ export default function DashboardPage() {
         );
 
         if (!res.ok) throw new Error();
-        setMe(await res.json());
+
+        const data: MeResponse = await res.json();
+
+        // 🔥 AQUI ESTÁ O QUE FALTAVA
+        localStorage.setItem('tenant', data.tenant);
+
+        setMe(data);
       } catch {
         localStorage.removeItem('token');
+        localStorage.removeItem('tenant');
         router.push('/login');
       } finally {
         setLoading(false);
@@ -75,7 +82,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10">
-
       {/* Título */}
       <div>
         <h1 className="text-2xl font-semibold text-blue-900">
