@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import StatCard from '@/components/StatCard';
 import RiskChart from './components/RiskChart';
+import RiskSummary from './components/RiskSummary';
+import { Building2, User } from 'lucide-react';
 
 type MeResponse = {
   tenant: string;
@@ -15,6 +17,13 @@ type Team = {
   name: string;
 };
 
+type RiskMapResponse = {
+  labels: string[];
+  baixo: number[];
+  medio: number[];
+  alto: number[];
+};
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -22,6 +31,13 @@ export default function DashboardPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeam, setNewTeam] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const [months, setMonths] = useState(12);
+  const [selectedTeamId, setSelectedTeamId] =
+    useState<string | null>(null);
+
+  const [riskRawData, setRiskRawData] =
+    useState<RiskMapResponse | null>(null);
 
   const token =
     typeof window !== 'undefined'
@@ -79,7 +95,9 @@ export default function DashboardPage() {
     setNewTeam('');
 
     const res = await fetch('http://localhost:3001/team', {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     setTeams(await res.json());
@@ -98,17 +116,32 @@ export default function DashboardPage() {
   return (
     <div className="space-y-10">
 
-      {/* Título */}
-      <div>
-        <h1 className="text-2xl font-semibold text-blue-900">
-          Dashboard
-        </h1>
-        <p className="text-sm text-gray-500">
-          Visão geral do seu tenant
-        </p>
+      {/* Cabeçalho refinado */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-blue-900">
+            Dashboard
+          </h1>
+          <p className="text-sm text-gray-500">
+            Visão geral do ambiente
+          </p>
+        </div>
+
+        {/* Contexto: tenant e usuário */}
+        <div className="flex gap-3">
+          <div className="flex items-center gap-2 bg-blue-50 text-blue-900 px-3 py-1.5 rounded-full text-sm">
+            <Building2 size={16} />
+            <span>{me.tenant}</span>
+          </div>
+
+          <div className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm">
+            <User size={16} />
+            <span>{me.email}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Métricas */}
+      {/* Cards de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Diagnósticos" value={173} subtitle="ativos" variant="success" />
         <StatCard title="Times em risco" value={3} subtitle="alto" variant="danger" />
@@ -117,69 +150,96 @@ export default function DashboardPage() {
       </div>
 
       {/* Gráfico */}
-      <div className="bg-white rounded-xl shadow p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-blue-900">
+      <div className="bg-white rounded-xl shadow p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold text-blue-900">
             Mapa de Risco Psicossocial
           </h2>
 
-          <select className="border rounded-md px-3 py-1 text-sm">
-            <option>3 meses</option>
-            <option>6 meses</option>
-            <option>12 meses</option>
-          </select>
+          <div className="flex gap-3">
+            <select
+              value={selectedTeamId ?? ''}
+              onChange={(e) =>
+                setSelectedTeamId(
+                  e.target.value || null
+                )
+              }
+              className="border rounded-md px-3 py-1 text-sm"
+            >
+              <option value="">Todos os times</option>
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={months}
+              onChange={(e) => setMonths(Number(e.target.value))}
+              className="border rounded-md px-3 py-1 text-sm"
+            >
+              <option value={3}>3 meses</option>
+              <option value={6}>6 meses</option>
+              <option value={12}>12 meses</option>
+            </select>
+          </div>
         </div>
 
-        <RiskChart />
-      </div>
-
-      {/* Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-sm text-gray-500">Tenant</p>
-          <p className="text-2xl font-semibold text-blue-900 mt-1">
-            {me.tenant}
-          </p>
+        <div className="bg-blue-50 rounded-lg p-4">
+          <RiskChart
+            months={months}
+            teamId={selectedTeamId}
+            onDataLoaded={setRiskRawData}
+          />
         </div>
 
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-sm text-gray-500">Usuário</p>
-          <p className="text-lg font-medium text-gray-800 mt-1">
-            {me.email}
-          </p>
-        </div>
+        {riskRawData && (
+          <RiskSummary
+            labels={riskRawData.labels}
+            alto={riskRawData.alto}
+          />
+        )}
       </div>
 
       {/* Times */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4">
-        <h2 className="text-xl font-semibold text-blue-900">Times</h2>
+        <h2 className="text-xl font-semibold text-blue-900">
+          Times
+        </h2>
 
         <div className="flex gap-2">
           <input
             value={newTeam}
             onChange={(e) => setNewTeam(e.target.value)}
             placeholder="Nome do time"
-            className="flex-1 border rounded-lg px-4 py-2"
+            className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <button
             onClick={createTeam}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
           >
             Criar
           </button>
         </div>
 
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {teams.map((team) => (
-            <li
-              key={team.id}
-              className="p-4 border rounded-lg bg-gray-50"
-            >
-              {team.name}
-            </li>
-          ))}
-        </ul>
+        {teams.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            Nenhum time cadastrado ainda
+          </p>
+        ) : (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {teams.map((team) => (
+              <li
+                key={team.id}
+                className="p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition"
+              >
+                {team.name}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

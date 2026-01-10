@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm'
 
-import { typeOrmConfig } from './shared/database/typeorm.config';
+import { typeOrmConfig } from './shared/database/typeorm.config'
 
-import { AuthModule } from './modules/auth/auth.module';
-import { TeamModule } from './modules/team/team.module';
-import { DiagnosticModule } from './modules/diagnostic/diagnostic.module';
+import { AuthModule } from './modules/auth/auth.module'
+import { TeamModule } from './modules/team/team.module'
+import { DiagnosticModule } from './modules/diagnostic/diagnostic.module'
+import { RiskModule } from './modules/risk/risk.module'
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { DiagnosticModule } from './modules/diagnostic/diagnostic.module';
     AuthModule,
     TeamModule,
     DiagnosticModule,
+    RiskModule,
   ],
   controllers: [],
   providers: [],
