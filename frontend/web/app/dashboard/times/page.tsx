@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react';
 import CrudLayout from '@/components/crud/CrudLayout';
 import { CrudTable } from '@/components/crud/CrudTable';
 import TeamModal from '@/components/crud/TeamModal';
-
+import CrudLogModal from '@/components/crud/CrudLogModal';
+import CrudConfirmModal from '@/components/crud/CrudConfirmModal';
 
 type Team = {
   id: string;
   name: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 const LIMIT = 15;
@@ -21,7 +25,14 @@ export default function TimesPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
   const [editing, setEditing] = useState<Team | null>(null);
+
+  const [logOpen, setLogOpen] = useState(false);
+  const [logRow, setLogRow] = useState<Team | null>(null);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -48,27 +59,29 @@ export default function TimesPage() {
 
     const json = await res.json();
 
-    setData(json.data);
-    setTotal(json.total);
-    setTotalPages(json.totalPages);
+    setData(json.data ?? []);
+    setTotal(json.total ?? 0);
+    setTotalPages(json.totalPages ?? 1);
   }
 
-  async function remove(id: string) {
-    if (!confirm('Deseja remover este time?')) return;
+  async function confirmDelete() {
+    if (!deleteId) return;
 
     const token = localStorage.getItem('token');
 
-    await fetch(`http://localhost:3001/team/${id}`, {
+    await fetch(`http://localhost:3001/team/${deleteId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
+    setConfirmOpen(false);
+    setDeleteId(null);
     load();
   }
 
-  const start = (page - 1) * LIMIT + 1;
+  const start = total === 0 ? 0 : (page - 1) * LIMIT + 1;
   const end = Math.min(page * LIMIT, total);
 
   return (
@@ -79,11 +92,12 @@ export default function TimesPage() {
           <button
             onClick={() => {
               setEditing(null);
+              setModalMode('create');
               setModalOpen(true);
             }}
-            className="bg-yellow-400 px-4 py-2 rounded-lg font-medium"
+            className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-medium flex items-center gap-2"
           >
-            + Novo time
+            👥 Novo time
           </button>
         }
       >
@@ -109,21 +123,51 @@ export default function TimesPage() {
           columns={[{ key: 'name', label: 'Nome do time' }]}
           data={data}
           actions={(row: Team) => (
-            <div className="flex gap-3">
+            <div className="flex justify-end gap-4 text-xl">
+              {/* Visualizar */}
               <button
+                title="Visualizar"
                 onClick={() => {
                   setEditing(row);
+                  setModalMode('view');
                   setModalOpen(true);
                 }}
-                className="text-blue-600"
+              >
+                👁️
+              </button>
+
+              {/* Editar */}
+              <button
+                title="Editar"
+                onClick={() => {
+                  setEditing(row);
+                  setModalMode('edit');
+                  setModalOpen(true);
+                }}
               >
                 ✏️
               </button>
+
+              {/* Excluir */}
               <button
-                onClick={() => remove(row.id)}
-                className="text-red-600"
+                title="Excluir"
+                onClick={() => {
+                  setDeleteId(row.id);
+                  setConfirmOpen(true);
+                }}
               >
                 🗑
+              </button>
+
+              {/* Log */}
+              <button
+                title="Log"
+                onClick={() => {
+                  setLogRow(row);
+                  setLogOpen(true);
+                }}
+              >
+                📄
               </button>
             </div>
           )}
@@ -172,12 +216,29 @@ export default function TimesPage() {
         </div>
       </CrudLayout>
 
-      {/* Modal */}
+      {/* Modal criar / editar / visualizar */}
       <TeamModal
         open={modalOpen}
         team={editing}
+        mode={modalMode}
         onClose={() => setModalOpen(false)}
         onSuccess={load}
+      />
+
+      {/* Modal log */}
+      <CrudLogModal
+        open={logOpen}
+        row={logRow}
+        onClose={() => setLogOpen(false)}
+      />
+
+      {/* Confirmação de exclusão */}
+      <CrudConfirmModal
+        open={confirmOpen}
+        title="Excluir registro"
+        message={`Tem certeza que deseja excluir este registro?\n\nEssa ação não pode ser desfeita.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmOpen(false)}
       />
     </>
   );
