@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import StatCard from '@/components/StatCard';
-import RiskChart from './components/RiskChart';
-import RiskSummary from './components/RiskSummary';
+import RiskChart from '@/app/dashboard/components/RiskChart';
+import RiskSummary from '@/app/dashboard/components/RiskSummary';
 import { Building2, User } from 'lucide-react';
 
 type MeResponse = {

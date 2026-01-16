@@ -6,6 +6,7 @@ import { CrudTable } from '@/components/crud/CrudTable';
 import TeamModal from '@/components/crud/TeamModal';
 import CrudLogModal from '@/components/crud/CrudLogModal';
 import CrudConfirmModal from '@/components/crud/CrudConfirmModal';
+import CrudExportButtons from '@/components/crud/CrudExportButtons';
 
 type Team = {
   id: string;
@@ -25,7 +26,8 @@ export default function TimesPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [modalMode, setModalMode] =
+    useState<'create' | 'edit' | 'view'>('create');
   const [editing, setEditing] = useState<Team | null>(null);
 
   const [logOpen, setLogOpen] = useState(false);
@@ -40,6 +42,7 @@ export default function TimesPage() {
 
   async function load() {
     const token = localStorage.getItem('token');
+    const tenant = localStorage.getItem('tenant');
 
     const params = new URLSearchParams({
       page: String(page),
@@ -53,6 +56,7 @@ export default function TimesPage() {
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          'x-tenant-id': tenant ?? '',
         },
       },
     );
@@ -68,11 +72,13 @@ export default function TimesPage() {
     if (!deleteId) return;
 
     const token = localStorage.getItem('token');
+    const tenant = localStorage.getItem('tenant');
 
     await fetch(`http://localhost:3001/team/${deleteId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
+        'x-tenant-id': tenant ?? '',
       },
     });
 
@@ -89,16 +95,27 @@ export default function TimesPage() {
       <CrudLayout
         title="Times"
         action={
-          <button
-            onClick={() => {
-              setEditing(null);
-              setModalMode('create');
-              setModalOpen(true);
-            }}
-            className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-medium flex items-center gap-2"
-          >
-            👥 Novo time
-          </button>
+          <div className="flex gap-2">
+            <CrudExportButtons
+              endpoint="/team"
+              query={{
+                search,
+                page,
+                limit: LIMIT,
+              }}
+            />
+
+            <button
+              onClick={() => {
+                setEditing(null);
+                setModalMode('create');
+                setModalOpen(true);
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-medium flex items-center gap-2"
+            >
+              👥 Novo time
+            </button>
+          </div>
         }
       >
         {/* Busca */}
@@ -124,7 +141,6 @@ export default function TimesPage() {
           data={data}
           actions={(row: Team) => (
             <div className="flex justify-end gap-4 text-xl">
-              {/* Visualizar */}
               <button
                 title="Visualizar"
                 onClick={() => {
@@ -136,7 +152,6 @@ export default function TimesPage() {
                 👁️
               </button>
 
-              {/* Editar */}
               <button
                 title="Editar"
                 onClick={() => {
@@ -148,7 +163,6 @@ export default function TimesPage() {
                 ✏️
               </button>
 
-              {/* Excluir */}
               <button
                 title="Excluir"
                 onClick={() => {
@@ -159,7 +173,6 @@ export default function TimesPage() {
                 🗑
               </button>
 
-              {/* Log */}
               <button
                 title="Log"
                 onClick={() => {
@@ -216,7 +229,6 @@ export default function TimesPage() {
         </div>
       </CrudLayout>
 
-      {/* Modal criar / editar / visualizar */}
       <TeamModal
         open={modalOpen}
         team={editing}
@@ -225,14 +237,12 @@ export default function TimesPage() {
         onSuccess={load}
       />
 
-      {/* Modal log */}
       <CrudLogModal
         open={logOpen}
         row={logRow}
         onClose={() => setLogOpen(false)}
       />
 
-      {/* Confirmação de exclusão */}
       <CrudConfirmModal
         open={confirmOpen}
         title="Excluir registro"

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 import StatCard from '@/components/StatCard';
-import RiskChart from './components/RiskChart';
-import RiskSummary from './components/RiskSummary';
+import RiskChart from '@/app/dashboard/components/RiskChart';
+import RiskSummary from '@/app/dashboard/components/RiskSummary';
 
 type MeResponse = {
   tenant: string;
@@ -54,9 +55,7 @@ export default function DashboardPage() {
 
         const data: MeResponse = await res.json();
 
-        // 🔥 AQUI ESTÁ O QUE FALTAVA
         localStorage.setItem('tenant', data.tenant);
-
         setMe(data);
       } catch {
         localStorage.removeItem('token');

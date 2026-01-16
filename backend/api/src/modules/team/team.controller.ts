@@ -8,8 +8,10 @@ import {
   Param,
   Query,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -18,6 +20,9 @@ import { ListTeamDto } from './dto/list-team.dto';
 
 import { Tenant } from '../../shared/decorators/tenant.decorator';
 import { User } from '../../shared/decorators/user.decorator';
+
+import { PdfService } from '../../shared/services/pdf.service';
+import { reportTemplate } from '../../shared/templates/report.template';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('team')
@@ -39,6 +44,39 @@ export class TeamController {
     @Tenant() tenantId: string,
   ) {
     return this.service.findAll(query, tenantId);
+  }
+
+  // =========================
+  // EXPORT PDF
+  // =========================
+  @Get('export/pdf')
+  async exportPdf(
+    @Query() query: ListTeamDto,
+    @Tenant() tenantId: string,
+    @Res() res: Response,
+  ) {
+    const result = await this.service.findAll(
+      { ...query, page: undefined, limit: undefined },
+      tenantId,
+    );
+
+    const teams = result.data;
+
+    const html = reportTemplate({
+      title: 'Relatório de Times',
+      columns: ['Nome do time'],
+      rows: teams.map(team => [team.name]),
+    });
+
+    const buffer = await PdfService.generate(html);
+
+    res
+      .setHeader('Content-Type', 'application/pdf')
+      .setHeader(
+        'Content-Disposition',
+        'attachment; filename=times.pdf',
+      )
+      .send(buffer);
   }
 
   @Put(':id')
