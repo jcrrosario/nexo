@@ -22,6 +22,7 @@ import { Tenant } from '../../shared/decorators/tenant.decorator';
 import { User } from '../../shared/decorators/user.decorator';
 
 import { PdfService } from '../../shared/services/pdf.service';
+import { ExcelService } from '../../shared/services/excel.service';
 import { reportTemplate } from '../../shared/templates/report.template';
 
 @UseGuards(AuthGuard('jwt'))
@@ -75,6 +76,40 @@ export class TeamController {
       .setHeader(
         'Content-Disposition',
         'attachment; filename=times.pdf',
+      )
+      .send(buffer);
+  }
+
+  // =========================
+  // EXPORT EXCEL
+  // =========================
+  @Get('export/excel')
+  async exportExcel(
+    @Query() query: ListTeamDto,
+    @Tenant() tenantId: string,
+    @Res() res: Response,
+  ) {
+    const result = await this.service.findAll(
+      { ...query, page: undefined, limit: undefined },
+      tenantId,
+    );
+
+    const teams = result.data;
+
+    const buffer = await ExcelService.generate({
+      title: 'Times',
+      columns: ['Nome do time'],
+      rows: teams.map(team => [team.name]),
+    });
+
+    res
+      .setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      )
+      .setHeader(
+        'Content-Disposition',
+        'attachment; filename=times.xlsx',
       )
       .send(buffer);
   }
