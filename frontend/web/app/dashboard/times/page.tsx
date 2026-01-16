@@ -25,6 +25,10 @@ export default function TimesPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  // 🔹 ordenação
+  const [sort, setSort] = useState<string | null>(null);
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] =
     useState<'create' | 'edit' | 'view'>('create');
@@ -38,7 +42,7 @@ export default function TimesPage() {
 
   useEffect(() => {
     load();
-  }, [page, search]);
+  }, [page, search, sort, order]);
 
   async function load() {
     const token = localStorage.getItem('token');
@@ -50,6 +54,10 @@ export default function TimesPage() {
     });
 
     if (search) params.append('search', search);
+    if (sort) {
+      params.append('sort', sort);
+      params.append('order', order);
+    }
 
     const res = await fetch(
       `http://localhost:3001/team?${params.toString()}`,
@@ -102,6 +110,8 @@ export default function TimesPage() {
                 search,
                 page,
                 limit: LIMIT,
+                sort,
+                order,
               }}
             />
 
@@ -137,8 +147,17 @@ export default function TimesPage() {
 
         {/* Tabela */}
         <CrudTable
-          columns={[{ key: 'name', label: 'Nome do time' }]}
+          columns={[
+            { key: 'name', label: 'Nome do time', sortable: true },
+          ]}
           data={data}
+          sort={sort}
+          order={order}
+          onSort={(s, o) => {
+            setPage(1);
+            setSort(s);
+            setOrder(o);
+          }}
           actions={(row: Team) => (
             <div className="flex justify-end gap-4 text-xl">
               <button

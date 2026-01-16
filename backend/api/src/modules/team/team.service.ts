@@ -14,7 +14,11 @@ export class TeamService {
     private readonly repo: Repository<Team>,
   ) {}
 
-  async create(dto: CreateTeamDto, tenantId: string, userId: string) {
+  async create(
+    dto: CreateTeamDto,
+    tenantId: string,
+    userId: string,
+  ) {
     const team = this.repo.create({
       name: dto.name,
       tenant_id: tenantId,
@@ -25,19 +29,38 @@ export class TeamService {
   }
 
   async findAll(dto: ListTeamDto, tenantId: string) {
-    const page = Number(dto.page ?? 1);
-    const limit = Number(dto.limit ?? 15);
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 15;
     const skip = (page - 1) * limit;
 
-    const where: any = { tenant_id: tenantId };
+    const sort = dto.sort ?? 'created_at';
+    const order =
+      dto.order === 'asc' || dto.order === 'desc'
+        ? dto.order
+        : 'desc';
+
+    // whitelist de colunas ordenáveis
+    const sortableColumns = ['name', 'created_at'];
+
+    const where: any = {
+      tenant_id: tenantId,
+    };
 
     if (dto.search) {
       where.name = ILike(`%${dto.search}%`);
     }
 
+    const orderBy: any = {};
+
+    if (sortableColumns.includes(sort)) {
+      orderBy[sort] = order.toUpperCase();
+    } else {
+      orderBy.created_at = 'DESC';
+    }
+
     const [data, total] = await this.repo.findAndCount({
       where,
-      order: { created_at: 'DESC' },
+      order: orderBy,
       skip,
       take: limit,
     });
@@ -65,7 +88,10 @@ export class TeamService {
       },
     );
 
-    return this.repo.findOneBy({ id, tenant_id: tenantId });
+    return this.repo.findOneBy({
+      id,
+      tenant_id: tenantId,
+    });
   }
 
   async remove(id: string, tenantId: string) {

@@ -3,19 +3,38 @@
 type Column = {
   key: string;
   label: string;
+  sortable?: boolean;
 };
 
 type Props<T> = {
   columns: Column[];
-  data?: T[]; // 👈 opcional de propósito
+  data?: T[]; // opcional de propósito
   actions?: (row: T) => React.ReactNode;
+
+  // ordenação (opcional)
+  sort?: string | null;
+  order?: 'asc' | 'desc';
+  onSort?: (sort: string, order: 'asc' | 'desc') => void;
 };
 
 export function CrudTable<T extends { id: string }>({
   columns,
-  data = [], // 👈 valor padrão blindado
+  data = [],
   actions,
+  sort,
+  order = 'asc',
+  onSort,
 }: Props<T>) {
+  function handleSort(col: Column) {
+    if (!col.sortable || !onSort) return;
+
+    if (sort === col.key) {
+      onSort(col.key, order === 'asc' ? 'desc' : 'asc');
+    } else {
+      onSort(col.key, 'asc');
+    }
+  }
+
   return (
     <div className="overflow-x-auto border rounded-lg">
       <table className="min-w-full border-collapse">
@@ -24,9 +43,22 @@ export function CrudTable<T extends { id: string }>({
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left text-sm font-medium"
+                onClick={() => handleSort(col)}
+                className={`px-4 py-3 text-left text-sm font-medium ${
+                  col.sortable && onSort
+                    ? 'cursor-pointer select-none'
+                    : ''
+                }`}
               >
-                {col.label}
+                <span className="flex items-center gap-2">
+                  {col.label}
+
+                  {col.sortable && sort === col.key && (
+                    <span className="text-xs">
+                      {order === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </span>
               </th>
             ))}
 

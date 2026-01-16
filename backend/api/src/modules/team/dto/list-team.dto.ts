@@ -1,4 +1,9 @@
-import { IsOptional, IsString, IsNumberString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumberString,
+  IsIn,
+} from 'class-validator';
 
 export class ListTeamDto {
   @IsOptional()
@@ -12,4 +17,13 @@ export class ListTeamDto {
   @IsOptional()
   @IsNumberString()
   limit?: string;
+
+  // ordenação
+  @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  order?: 'asc' | 'desc';
 }
