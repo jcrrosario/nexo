@@ -6,6 +6,14 @@ import { useRouter } from 'next/navigation';
 import StatCard from '@/components/StatCard';
 import RiskChart from '@/app/dashboard/components/RiskChart';
 import RiskSummary from '@/app/dashboard/components/RiskSummary';
+import InsightCard from '@/components/ui/InsightCard';
+
+import {
+  ClipboardList,
+  AlertTriangle,
+  Activity,
+  ShieldCheck,
+} from 'lucide-react';
 
 type MeResponse = {
   tenant: string;
@@ -42,14 +50,11 @@ export default function DashboardPage() {
 
     async function load() {
       try {
-        const res = await fetch(
-          'http://localhost:3001/auth/me',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await fetch('http://localhost:3001/auth/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!res.ok) throw new Error();
 
@@ -80,14 +85,15 @@ export default function DashboardPage() {
   if (!me) return null;
 
   return (
-    <div className="space-y-10">
-      {/* Título */}
-      <div>
+    <div className="space-y-12">
+
+      {/* Cabeçalho */}
+      <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-blue-900">
           Dashboard
         </h1>
         <p className="text-sm text-gray-500">
-          Visão geral do seu tenant
+          Leitura atual do ambiente
         </p>
       </div>
 
@@ -97,60 +103,95 @@ export default function DashboardPage() {
           title="Diagnósticos"
           value={173}
           subtitle="ativos"
-          variant="success"
+          icon={<ClipboardList size={20} />}
         />
+
         <StatCard
           title="Times em risco"
           value={3}
           subtitle="alto"
           variant="danger"
+          icon={<AlertTriangle size={20} />}
         />
+
         <StatCard
           title="Ações preventivas"
           value={5}
           subtitle="acompanhadas"
           variant="warning"
+          icon={<Activity size={20} />}
         />
+
         <StatCard
           title="Compliance NR-1"
           value="Em dia"
-          variant="success"
+          icon={<ShieldCheck size={20} />}
         />
       </div>
 
-      {/* Gráfico */}
-      <div className="bg-white rounded-xl shadow p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-blue-900">
-            Mapa de Risco Psicossocial
-          </h2>
+      {/* Gráfico + Insight */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-          <select
-            value={months}
-            onChange={(e) =>
-              setMonths(Number(e.target.value))
-            }
-            className="border rounded-md px-3 py-1 text-sm"
-          >
-            <option value={3}>3 meses</option>
-            <option value={6}>6 meses</option>
-            <option value={12}>12 meses</option>
-          </select>
+        {/* Gráfico */}
+        <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-blue-900">
+                Mapa de Risco Psicossocial
+              </h2>
+              <p className="text-sm text-gray-500">
+                Evolução dos níveis de risco no período selecionado
+              </p>
+            </div>
+
+            <select
+              value={months}
+              onChange={(e) => setMonths(Number(e.target.value))}
+              className="border rounded-md px-3 py-1.5 text-sm bg-white"
+            >
+              <option value={3}>Últimos 3 meses</option>
+              <option value={6}>Últimos 6 meses</option>
+              <option value={12}>Últimos 12 meses</option>
+            </select>
+          </div>
+
+          <div className="bg-blue-50/50 rounded-xl p-6">
+            <RiskChart
+              months={months}
+              onDataLoaded={setRiskRawData}
+            />
+          </div>
+
+          {riskRawData && (
+            <RiskSummary
+              labels={riskRawData.labels}
+              alto={riskRawData.alto}
+            />
+          )}
         </div>
 
-        <div className="bg-blue-50 rounded-lg p-4">
-          <RiskChart
-            months={months}
-            onDataLoaded={setRiskRawData}
-          />
-        </div>
-
-        {riskRawData && (
-          <RiskSummary
-            labels={riskRawData.labels}
-            alto={riskRawData.alto}
-          />
-        )}
+        {/* Insight */}
+        <InsightCard
+          title="Situação atual"
+          level="warning"
+          description={
+            <>
+              Os dados indicam tendência de aumento de risco psicossocial
+              nos últimos meses. Recomenda-se atenção especial aos times
+              com maior concentração de risco alto.
+            </>
+          }
+          actions={
+            <div className="flex flex-col gap-2">
+              <button className="text-sm font-medium text-blue-700 hover:underline">
+                Ver times em risco
+              </button>
+              <button className="text-sm font-medium text-gray-700 hover:underline">
+                Acompanhar ações
+              </button>
+            </div>
+          }
+        />
       </div>
     </div>
   );

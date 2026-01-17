@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import CrudLayout from '@/components/crud/CrudLayout';
+
 import { CrudTable } from '@/components/crud/CrudTable';
 import TeamModal from '@/components/crud/TeamModal';
 import CrudLogModal from '@/components/crud/CrudLogModal';
 import CrudConfirmModal from '@/components/crud/CrudConfirmModal';
 import CrudExportButtons from '@/components/crud/CrudExportButtons';
+
+import PageHeader from '@/components/ui/PageHeader';
+import Card from '@/components/ui/Card';
+import SearchInput from '@/components/ui/SearchInput';
+import MetaInfo from '@/components/ui/MetaInfo';
 
 type Team = {
   id: string;
@@ -25,7 +30,7 @@ export default function TimesPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 🔹 ordenação
+  // ordenação
   const [sort, setSort] = useState<string | null>(null);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -100,10 +105,12 @@ export default function TimesPage() {
 
   return (
     <>
-      <CrudLayout
+      {/* Header */}
+      <PageHeader
         title="Times"
-        action={
-          <div className="flex gap-2">
+        subtitle="Gerencie os times da sua organização"
+        actions={
+          <>
             <CrudExportButtons
               endpoint="/team"
               query={{
@@ -121,28 +128,30 @@ export default function TimesPage() {
                 setModalMode('create');
                 setModalOpen(true);
               }}
-              className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-medium flex items-center gap-2"
+              className="bg-green-600 hover:bg-green-700
+                         text-white px-5 py-2 rounded-lg
+                         font-medium transition"
             >
-              👥 Novo time
+              Novo time
             </button>
-          </div>
+          </>
         }
-      >
-        {/* Busca */}
+      />
+
+      {/* Conteúdo */}
+      <Card>
+        {/* Busca + Meta */}
         <div className="flex justify-between items-center mb-6">
-          <input
+          <SearchInput
             value={search}
-            onChange={(e) => {
+            onChange={(value) => {
               setPage(1);
-              setSearch(e.target.value);
+              setSearch(value);
             }}
             placeholder="Buscar time..."
-            className="border rounded-lg px-4 py-2 w-80"
           />
 
-          <span className="text-sm text-gray-500">
-            {total} registros
-          </span>
+          <MetaInfo text={`${total} registros`} />
         </div>
 
         {/* Tabela */}
@@ -159,7 +168,7 @@ export default function TimesPage() {
             setOrder(o);
           }}
           actions={(row: Team) => (
-            <div className="flex justify-end gap-4 text-xl">
+            <div className="flex justify-end gap-4 text-lg">
               <button
                 title="Visualizar"
                 onClick={() => {
@@ -167,6 +176,7 @@ export default function TimesPage() {
                   setModalMode('view');
                   setModalOpen(true);
                 }}
+                className="hover:text-blue-600 transition"
               >
                 👁️
               </button>
@@ -178,6 +188,7 @@ export default function TimesPage() {
                   setModalMode('edit');
                   setModalOpen(true);
                 }}
+                className="hover:text-amber-600 transition"
               >
                 ✏️
               </button>
@@ -188,6 +199,7 @@ export default function TimesPage() {
                   setDeleteId(row.id);
                   setConfirmOpen(true);
                 }}
+                className="hover:text-red-600 transition"
               >
                 🗑
               </button>
@@ -198,6 +210,7 @@ export default function TimesPage() {
                   setLogRow(row);
                   setLogOpen(true);
                 }}
+                className="hover:text-gray-600 transition"
               >
                 📄
               </button>
@@ -207,15 +220,14 @@ export default function TimesPage() {
 
         {/* Paginação */}
         <div className="flex justify-between items-center mt-6">
-          <span className="text-sm text-gray-500">
-            Exibindo {start}–{end} de {total}
-          </span>
+          <MetaInfo text={`Exibindo ${start}–${end} de ${total}`} />
 
           <div className="flex gap-1">
             <button
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
-              className="px-3 py-1 border rounded disabled:opacity-40"
+              className="px-3 py-1 border rounded
+                         disabled:opacity-40"
             >
               Anterior
             </button>
@@ -240,14 +252,16 @@ export default function TimesPage() {
             <button
               disabled={page === totalPages}
               onClick={() => setPage(page + 1)}
-              className="px-3 py-1 border rounded disabled:opacity-40"
+              className="px-3 py-1 border rounded
+                         disabled:opacity-40"
             >
               Próximo
             </button>
           </div>
         </div>
-      </CrudLayout>
+      </Card>
 
+      {/* Modais */}
       <TeamModal
         open={modalOpen}
         team={editing}

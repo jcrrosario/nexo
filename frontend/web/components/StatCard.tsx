@@ -1,49 +1,70 @@
-type StatCardProps = {
+'use client';
+
+import { ReactNode } from 'react';
+
+type Variant = 'default' | 'success' | 'warning' | 'danger';
+
+type Props = {
   title: string;
   value: string | number;
   subtitle?: string;
-  variant?: 'success' | 'danger' | 'warning';
+  icon?: ReactNode;
+  variant?: Variant;
+};
+
+const variants: Record<Variant, string> = {
+  default: 'text-blue-900',
+  success: 'text-green-600',
+  warning: 'text-orange-500',
+  danger: 'text-red-500',
 };
 
 export default function StatCard({
   title,
   value,
   subtitle,
-  variant = 'success',
-}: StatCardProps) {
-  const variants = {
-    success: {
-      bg: 'bg-green-100',
-      text: 'text-green-700',
-    },
-    danger: {
-      bg: 'bg-red-100',
-      text: 'text-red-700',
-    },
-    warning: {
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-700',
-    },
-  };
-
-  const styles = variants[variant];
-
+  icon,
+  variant = 'default',
+}: Props) {
   return (
-    <div className="bg-white rounded-xl shadow p-6">
-      <p className="text-sm text-gray-500">{title}</p>
+    <div
+      className="
+        bg-white
+        border border-gray-100
+        rounded-xl
+        px-5 py-4
+        shadow-sm
+        flex items-center gap-4
+      "
+    >
+      {/* Ícone */}
+      {icon && (
+        <div className="w-12 h-12 flex items-center justify-center">
+          <div className={`text-2xl ${variants[variant]}`}>
+            {icon}
+          </div>
+        </div>
+      )}
 
-      <div className="flex items-center gap-3 mt-2">
-        <p className="text-3xl font-semibold text-blue-900">
-          {value}
+      {/* Texto */}
+      <div className="space-y-0.5">
+        <p className="text-sm text-gray-500">
+          {title}
         </p>
 
-        {subtitle && (
+        <div className="flex items-baseline gap-2">
           <span
-            className={`text-xs px-2 py-1 rounded-full ${styles.bg} ${styles.text}`}
+            className={`text-2xl font-semibold ${variants[variant]}`}
           >
-            {subtitle}
+            {value}
           </span>
-        )}
+
+          {subtitle && (
+            <span className="text-sm text-gray-400">
+              {subtitle}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
